@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VicXLuauT Panel</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-gray-900 text-white theme-dark">
+  <div id="auth" class="container mx-auto p-4 max-w-2xl">
+    <h2 class="text-2xl font-bold mb-4">VicXLuauT Auth</h2>
+    <div id="login-form">
+      <input id="login-username" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Username" />
+      <input id="login-password" type="password" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Password" />
+      <button onclick="login()" class="bg-blue-600 p-2 rounded w-full">Login</button>
+    </div>
+    <div id="register-form" class="mt-4">
+      <input id="reg-username" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="New Username" />
+      <input id="reg-password" type="password" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="New Password" />
+      <button onclick="register()" class="bg-green-600 p-2 rounded w-full">Register (Guest)</button>
+    </div>
+    <p id="status" class="mt-2 text-red-500"></p>
+  </div>
+
+  <div id="dashboard" class="container mx-auto p-4 max-w-2xl hidden">
+    <div class="flex justify-between mb-4">
+      <h2 class="text-2xl font-bold">Dashboard</h2>
+      <button onclick="toggleTheme()" class="bg-gray-700 p-2 rounded">Toggle Theme</button>
+    </div>
+    <div id="upload">
+      <h3 class="text-xl mb-2">Upload Script</h3>
+      <input id="name" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Script name" />
+      <input id="key" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Whitelist key" />
+      <input id="expiryDays" type="number" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Expiry days" />
+      <select id="obfuscationLevel" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded">
+        <option value="light">Light</option>
+        <option value="medium">Medium</option>
+        <option value="heavy">Heavy</option>
+      </select>
+      <input id="price" type="number" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Script price (mock)" />
+      <pre id="editor" class="h-64 mb-2 border border-gray-600 rounded" style="position: relative;">-- Thanks for using Sonar, developed by CG, Ethan, Ad</pre>
+      <p id="editor-status" class="text-sm text-gray-400 mb-2">Drag .lua file or paste code here.</p>
+      <button onclick="upload()" class="bg-blue-600 p-2 rounded w-full">Upload</button>
+    </div>
+
+    <div id="bundle" class="mt-4">
+      <h3 class="text-xl mb-2">Bundle Scripts</h3>
+      <input id="bundle-keys" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Comma-separated keys" />
+      <input id="bundle-name" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Bundle name" />
+      <button onclick="bundleScripts()" class="bg-purple-600 p-2 rounded w-full">Bundle</button>
+    </div>
+
+    <h3 class="text-xl mt-4 mb-2">Uploaded Scripts</h3>
+    <div id="list" class="space-y-4"></div>
+
+    <h3 class="text-xl mt-4 mb-2">Stats & Logs</h3>
+    <button onclick="loadStats()" class="bg-green-600 p-2 rounded mb-2">Load Stats</button>
+    <button onclick="exportCsv()" class="bg-yellow-600 p-2 rounded mb-2">Export CSV</button>
+    <div id="stats" class="space-y-2"></div>
+    <div id="audit" class="mt-4 text-yellow-400"></div>
+
+    <footer class="mt-8 text-center text-gray-500 text-sm">
+      Thanks for using Sonar, developed by CG, Ethan, Ad. Integrated in VicXLuauT.
+    </footer>
+  </div>
+
+  <script src="../src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+  <script src="../src-noconflict/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
+  <script src="script.js"></script>
+</body>
+</html>

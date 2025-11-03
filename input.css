@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.container {
+  @apply bg-gray-800 p-6 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl;
+}
+
+button {
+  @apply transition-opacity duration-200;
+}
+
+button:hover {
+  @apply opacity-90 scale-105;
+}
+
+.script-item {
+  @apply animate-fade-in;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.theme-light {
+  @apply bg-gray-100 text-black;
+}
+
+.theme-dark {
+  @apply bg-gray-900 text-white;
+}
+
+#editor {
+  background: #272822;
+}
