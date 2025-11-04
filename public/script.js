@@ -113,14 +113,16 @@ async function loadList() {
   const listDiv = document.getElementById("list");
   listDiv.innerHTML = "";
 
+  if (!data.scripts) data.scripts = [];  // Fix if undefined
+
   data.scripts.forEach((s) => {
     const div = document.createElement("div");
-    div.className = "p-4 bg-gray-800 rounded shadow";
+    div.className = "p-4 bg-gray-800 rounded shadow script-item";
     div.innerHTML = `
-      <b>${s.name}</b> — key: ${s.key} <br>
-      Expiry: ${new Date(s.expiry).toLocaleDateString()} | Level: ${s.obfuscationLevel || 'none'} <br>
-      Fetches: ${s.stats.fetches} (Last: ${s.stats.lastFetch || 'N/A'}) <br>
-      <pre><code class="lua">${s.code.substring(0, 100)}...</code></pre>
+      <b>${s.name || 'Unnamed'}</b> — key: ${s.key} <br>
+      Expiry: ${new Date(s.expiry || Date.now()).toLocaleDateString()} | Level: ${s.obfuscationLevel || 'none'} <br>
+      Fetches: ${s.stats?.fetches || 0} (Last: ${s.stats?.lastFetch || 'N/A'}) <br>
+      <pre><code class="lua">${(s.code || '').substring(0, 100)}...</code></pre>
       <code>https://${window.location.host}/api/code?key=${s.key}</code> <br>
       <button onclick="editScript(${s.id})" class="bg-yellow-600 p-1 rounded mr-2">Edit</button>
       <button onclick="deleteScript(${s.id})" class="bg-red-600 p-1 rounded">Delete</button>
@@ -128,7 +130,6 @@ async function loadList() {
     `;
     listDiv.appendChild(div);
   });
-  // hljs.highlightAll(); (kalau pake hljs, tapi Ace udah handle)
 }
 
 async function upload() {
