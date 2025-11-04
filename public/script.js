@@ -1,61 +1,68 @@
 let editor;
 
+// === TOGGLE THEME (Dark ↔ Light) ===
 function toggleTheme() {
-  document.body.classList.toggle('bg-gray-100');
-  document.body.classList.toggle('text-black');
-  document.body.classList.toggle('bg-gray-900');
-  document.body.classList.toggle('text-white');
-  const inputs = document.querySelectorAll('input, select');
-  inputs.forEach(el => {
-    el.classList.toggle('bg-white');
-    el.classList.toggle('text-black');
-    el.classList.toggle('bg-gray-800');
-    el.classList.toggle('text-white');
-    el.classList.toggle('border-gray-300');
-    el.classList.toggle('border-gray-600');
-  });
-  // Update Ace theme if needed
-  editor.setTheme(document.body.classList.contains('bg-gray-100') ? "ace/theme/chrome" : "ace/theme/monokai");
+  const isDark = document.body.style.background.includes('0f0f23');
+  document.body.style.background = isDark
+    ? 'linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 50%, #d0d0d0 100%)'
+    : 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%)';
+  document.body.style.color = isDark ? '#000' : '#e0e0e0';
+  editor.setTheme(isDark ? "ace/theme/chrome" : "ace/theme/monokai");
 }
 
+// === STATUS MESSAGE ===
+function status(msg) {
+  const el = document.getElementById("status");
+  if (el) el.innerText = msg;
+}
+
+// === REGISTER ===
 async function register() {
-  const username = document.getElementById("reg-username").value;
+  const username = document.getElementById("reg-username").value.trim();
   const password = document.getElementById("reg-password").value;
+  if (!username || !password) return status("Fill all fields");
 
-  const res = await fetch("/api/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-
-  const data = await res.json();
-  if (data.success) {
-    alert("Registered! Now login.");
-  } else {
-    document.getElementById("status").innerText = data.error;
+  try {
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    status(data.success ? "Registered! Login now." : data.error || "Failed");
+  } catch (err) {
+    status("Network error");
   }
 }
 
+// === LOGIN ===
 async function login() {
-  const username = document.getElementById("login-username").value;
+  const username = document.getElementById("login-username").value.trim();
   const password = document.getElementById("login-password").value;
+  if (!username || !password) return status("Fill all fields");
 
-  const res = await fetch(`/api/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
-  const data = await res.json();
+  try {
+    const res = await fetch(`/api/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
+    const data = await res.json();
 
-  if (data.success) {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("role", data.role);
-    document.getElementById("auth").classList.add("hidden");
-    document.getElementById("dashboard").classList.remove("hidden");
-    loadList();
-    initAceEditor();
-  } else {
-    document.getElementById("status").innerText = data.error;
+    if (data.success && data.token) {
+      localStorage.setItem("token", data.token);
+      document.getElementById("auth").classList.add("hidden");
+      document.getElementById("dashboard").classList.remove("hidden");
+      loadList();
+      initAceEditor();
+    } else {
+      status(data.error || "Login failed");
+    }
+  } catch (err) {
+    status("Network error");
   }
 }
 
+// === INIT ACE EDITOR ===
 function initAceEditor() {
+  if (editor) return; // Prevent double init
+
   ace.require("ace/ext/language_tools");
   editor = ace.edit("editor");
   editor.setTheme("ace/theme/monokai");
@@ -64,192 +71,192 @@ function initAceEditor() {
     enableBasicAutocompletion: true,
     enableSnippets: true,
     enableLiveAutocompletion: true,
-    fontSize: "14px"
+    fontSize: "14px",
+    showPrintMargin: false
   });
 
-  document.getElementById('editor').addEventListener('dragover', e => e.preventDefault());
-  document.getElementById('editor').addEventListener('drop', e => {
+  const editorEl = document.getElementById('editor');
+
+  // Drag & Drop .lua files
+  ['dragover', 'dragenter'].forEach(evt => {
+    editorEl.addEventListener(evt, e => e.preventDefault(), false);
+  });
+  editorEl.addEventListener('drop', e => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file && file.name.endsWith('.lua')) {
       const reader = new FileReader();
-      reader.onload = ev => editor.setValue(ev.target.result, -1);
+      reader.onload = ev => {
+        editor.setValue(ev.target.result, -1);
+        document.getElementById('editor-status').innerText = `Loaded: ${file.name}`;
+      };
       reader.readAsText(file);
     } else {
-      document.getElementById('editor-status').innerText = 'Only .lua files!';
+      document.getElementById('editor-status').innerText = 'Only .lua files allowed!';
     }
   });
 
-  document.getElementById('editor').addEventListener('paste', e => {
-    const text = e.clipboardData.getData('text');
-    editor.insert(text);
-  });
-
+  // Real-time syntax check
   editor.session.on('change', () => {
     const code = editor.getValue();
     let error = '';
-    if ((code.match(/\(/g) || []).length !== (code.match(/\)/g) || []).length) error = 'Unmatched parentheses';
-    if (!code.includes('local') && code.includes('function')) error += ' Missing local?';
+    const open = (code.match(/\(/g) || []).length;
+    const close = (code.match(/\)/g) || []).length;
+    if (open !== close) error = 'Unmatched parentheses';
     document.getElementById('editor-status').innerText = error || 'Code OK';
   });
-
-  if (!editor.getValue()) {
-    const templates = [
-      'print("Hello World")',
-      'local function add(a, b) return a + b end\nprint(add(1, 2))',
-      'for i = 1, 10 do print(i) end',
-      '-- Roblox example\nlocal part = Instance.new("Part")\npart.Name = "Test"'
-    ];
-    editor.setValue(templates[Math.floor(Math.random() * templates.length)], -1);
-  }
 }
 
-async function loadList() {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`/api/list?token=${encodeURIComponent(token)}`);
-  if (res.status !== 200) return alert("Session expired.");
-
-  const data = await res.json();
-  const listDiv = document.getElementById("list");
-  listDiv.innerHTML = "";
-
-  if (!data.scripts) data.scripts = [];  // Fix if undefined
-
-  data.scripts.forEach((s) => {
-    const div = document.createElement("div");
-    div.className = "p-4 bg-gray-800 rounded shadow script-item";
-    div.innerHTML = `
-      <b>${s.name || 'Unnamed'}</b> — key: ${s.key} <br>
-      Expiry: ${new Date(s.expiry || Date.now()).toLocaleDateString()} | Level: ${s.obfuscationLevel || 'none'} <br>
-      Fetches: ${s.stats?.fetches || 0} (Last: ${s.stats?.lastFetch || 'N/A'}) <br>
-      <pre><code class="lua">${(s.code || '').substring(0, 100)}...</code></pre>
-      <code>https://${window.location.host}/api/code?key=${s.key}</code> <br>
-      <button onclick="editScript(${s.id})" class="bg-yellow-600 p-1 rounded mr-2">Edit</button>
-      <button onclick="deleteScript(${s.id})" class="bg-red-600 p-1 rounded">Delete</button>
-      <button onclick="shareOnX('${s.key}')" class="bg-blue-400 p-1 rounded ml-2">Share on X</button>
-    `;
-    listDiv.appendChild(div);
-  });
-}
-
+// === UPLOAD SCRIPT ===
 async function upload() {
   const token = localStorage.getItem("token");
-  const name = document.getElementById("name").value;
-  const key = document.getElementById("key").value;
-  const expiryDays = document.getElementById("expiryDays").value;
+  if (!token) return alert("Login first!");
+
+  const name = document.getElementById("name").value.trim();
+  const key = document.getElementById("key").value.trim();
+  const expiryDays = document.getElementById("expiryDays").value || "30";
   const obfuscationLevel = document.getElementById("obfuscationLevel").value;
   const code = editor.getValue();
-  const price = document.getElementById("price").value;
 
-  const res = await fetch("/api/upload", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, key, expiryDays, obfuscationLevel, code, token }),
-  });
+  if (!name || !code) return alert("Name and code required!");
 
-  const data = await res.json();
-  if (data.success) {
-    alert("Uploaded!");
+  try {
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, key, expiryDays, obfuscationLevel, code, token })
+    });
+    const data = await res.json();
+    alert(data.success ? "Uploaded successfully!" : data.error || "Upload failed");
     loadList();
-  } else {
-    alert("Failed: " + data.error);
+  } catch (err) {
+    alert("Network error");
   }
 }
 
-async function bundleScripts() {
+// === LOAD SCRIPT LIST ===
+async function loadList() {
   const token = localStorage.getItem("token");
-  const keys = document.getElementById("bundle-keys").value.split(',');
-  const bundleName = document.getElementById("bundle-name").value;
+  if (!token) return;
 
-  const res = await fetch("/api/bundle", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ keys, bundleName, token }),
-  });
+  try {
+    const res = await fetch(`/api/list?token=${token}`);
+    if (!res.ok) throw new Error("Session expired");
+    const data = await res.json();
 
-  const data = await res.json();
-  if (data.success) {
-    alert("Bundled!");
-    loadList();
-  } else {
-    alert("Failed: " + data.error);
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    (data.scripts || []).forEach(s => {
+      const div = document.createElement("div");
+      div.className = "roblox-card p-5 rounded-xl roblox-shadow stagger mb-4";
+      div.innerHTML = `
+        <div class="flex justify-between items-start">
+          <div>
+            <b class="text-lg roblox-title">${s.name || 'Unnamed'}</b>
+            <code class="text-blue-400 text-sm ml-2">${s.key}</code>
+          </div>
+          <div class="text-right text-sm text-gray-400">
+            ${new Date(s.expiry).toLocaleDateString()} | ${s.obfuscationLevel || 'none'}
+          </div>
+        </div>
+        <div class="mt-2 text-xs text-gray-300">
+          Fetches: <b>${s.stats?.fetches || 0}</b> 
+          ${s.stats?.lastFetch ? `| Last: ${new Date(s.stats.lastFetch).toLocaleTimeString()}` : ''}
+        </div>
+        <pre class="mt-3 p-3 bg-gray-900 rounded text-xs overflow-x-auto"><code class="lua">${(s.code || '').substring(0, 150)}...</code></pre>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <a href="/api/code?key=${s.key}" target="_blank" class="text-blue-400 underline text-sm">Load Script</a>
+          <button onclick="editScript(${s.id})" class="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-sm">Edit</button>
+          <button onclick="deleteScript(${s.id})" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm">Delete</button>
+          <button onclick="shareOnX('${s.key}')" class="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-sm">Share on X</button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  } catch (err) {
+    alert("Failed to load scripts. Login again.");
+    localStorage.removeItem("token");
+    location.reload();
   }
 }
 
-async function editScript(id) {
-  const newCode = prompt("New code:");
-  if (!newCode) return;
-
-  const token = localStorage.getItem("token");
-  const res = await fetch("/api/edit", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, action: 'edit', newCode, token }),
-  });
-
-  if (res.ok) {
-    alert("Edited!");
-    loadList();
-  } else {
-    alert("Failed");
-  }
+// === EDIT SCRIPT (Load into editor) ===
+function editScript(id) {
+  alert(`Edit script ID: ${id} (coming soon)`);
+  // TODO: Load script code into editor
 }
 
+// === DELETE SCRIPT ===
 async function deleteScript(id) {
-  if (!confirm("Delete?")) return;
-
+  if (!confirm("Delete this script?")) return;
   const token = localStorage.getItem("token");
-  const res = await fetch("/api/edit", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, action: 'delete', token }),
-  });
-
-  if (res.ok) {
-    alert("Deleted!");
+  try {
+    const res = await fetch(`/api/delete?id=${id}&token=${token}`, { method: "DELETE" });
+    const data = await res.json();
+    alert(data.success ? "Deleted!" : data.error);
     loadList();
-  } else {
-    alert("Failed");
+  } catch (err) {
+    alert("Delete failed");
   }
 }
 
+// === SHARE ON X (Twitter) ===
 function shareOnX(key) {
-  const url = `https://${window.location.host}/api/code?key=${key}`;
-  window.open(`https://x.com/intent/post?text=Check my VicXLuauT script!&url=${encodeURIComponent(url)}`, '_blank');
+  const url = `${window.location.origin}/api/code?key=${key}`;
+  const text = `Check out my Luau script! %23RobloxDev %23Luau`;
+  const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  window.open(shareUrl, '_blank');
 }
 
+// === BUNDLE SCRIPTS ===
+async function bundleScripts() {
+  const keys = document.getElementById("bundle-keys").value.trim();
+  const name = document.getElementById("bundle-name").value.trim();
+  const token = localStorage.getItem("token");
+  if (!keys || !name) return alert("Fill keys and name");
+
+  try {
+    const res = await fetch("/api/bundle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keys: keys.split(","), name, token })
+    });
+    const data = await res.json();
+    alert(data.success ? `Bundle created: ${data.bundleKey}` : data.error);
+  } catch (err) {
+    alert("Bundle failed");
+  }
+}
+
+// === LOAD STATS ===
 async function loadStats() {
   const token = localStorage.getItem("token");
-  const res = await fetch(`/api/stats?token=${encodeURIComponent(token)}`);
-  if (res.status !== 200) return alert("Session expired.");
-
-  const data = await res.json();
-  const statsDiv = document.getElementById("stats");
-  statsDiv.innerHTML = "<h4 class='text-lg'>Script Stats</h4>";
-
-  data.stats.forEach((s) => {
-    statsDiv.innerHTML += `
-      <div class="p-2 bg-gray-800 rounded">
-        <b>${s.name}</b>: Fetches ${s.fetches}, Last ${s.lastFetch || 'N/A'}, Expiry ${new Date(s.expiry).toLocaleDateString()}
-      </div>
+  try {
+    const res = await fetch(`/api/stats?token=${token}`);
+    const data = await res.json();
+    const statsDiv = document.getElementById("stats");
+    statsDiv.innerHTML = `
+      <p>Total Scripts: <b>${data.totalScripts}</b></p>
+      <p>Total Fetches: <b>${data.totalFetches}</b></p>
+      <p>Active Users: <b>${data.activeUsers}</b></p>
     `;
-  });
-
-  statsDiv.innerHTML += "<h4 class='text-lg mt-2'>Notifications/Logs</h4>";
-  data.logs.forEach((log) => {
-    statsDiv.innerHTML += `
-      <div class="p-2 bg-red-900 rounded">
-        Unauthorized attempt: ${log.keyAttempt} from ${log.ip || 'Unknown'} at ${new Date(log.date).toLocaleString()}
-      </div>
-    `;
-  });
-
-  if (data.audit.length) {
-    document.getElementById("audit").innerHTML = `<h4 class="text-lg">Eco-Audit Suggestions</h4>Delete unused: ${data.audit.join(', ')}`;
+  } catch (err) {
+    document.getElementById("stats").innerHTML = "<p>Failed to load stats</p>";
   }
 }
 
-async function exportCsv() {
-  const token = localStorage.getItem("token");
-  window.location.href = `/api/export?token=${encodeURIComponent(token)}`;
-}s
+// === EXPORT CSV ===
+function exportCsv() {
+  alert("CSV Export coming soon!");
+}
+
+// === AUTO INIT ON LOAD ===
+window.addEventListener("load", () => {
+  if (localStorage.getItem("token")) {
+    document.getElementById("auth").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+    loadList();
+    initAceEditor();
+  }
+});
