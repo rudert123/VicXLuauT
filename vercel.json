@@ -1,4 +1,7 @@
 {
+  "version": 2,
+  "public": true,
+  "outputDirectory": "public",
   "builds": [
     {
       "src": "api/**/*.js",
@@ -14,6 +17,5 @@
       "src": "/(.*)",
       "dest": "/public/$1"
     }
-  ],
-  "outputDirectory": "public"
+  ]
 }
