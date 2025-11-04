@@ -5,69 +5,188 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VicXLuauT Panel</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Ace Editor CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.35.2/ace.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.35.2/ext-language_tools.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.35.2/mode-lua.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.35.2/theme-monokai.js"></script>
+  <style>
+    /* Blackbox AI Design + Fix */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+      background-attachment: fixed;
+      color: #e0e0e0;
+      overflow-x: hidden;
+      animation: bgShift 10s ease-in-out infinite alternate;
+    }
+    @keyframes bgShift {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+    .roblox-shadow {
+      box-shadow: 0 4px 20px rgba(0, 123, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .roblox-btn {
+      background: linear-gradient(45deg, #007bff, #0056b3);
+      border: none;
+      color: white;
+      font-weight: 600;
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .roblox-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    .roblox-btn:hover::before { left: 100%; }
+    .roblox-btn:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 30px rgba(0, 123, 255, 0.5);
+    }
+    .roblox-input {
+      background: #2a2a3e;
+      border: 1px solid #3a3a5e;
+      color: #e0e0e0;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    .roblox-input:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 12px rgba(0, 123, 255, 0.4);
+      transform: scale(1.01);
+    }
+    .roblox-card {
+      background: linear-gradient(145deg, #1e1e2f, #2a2a3e);
+      border: 1px solid #3a3a5e;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    .roblox-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 40px rgba(0, 123, 255, 0.3);
+    }
+    .roblox-title { color: #ffffff; font-weight: 700; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); }
+    .roblox-icon { width: 36px; height: 36px; margin-right: 10px; border-radius: 6px; transition: transform 0.3s ease; }
+    .roblox-icon:hover { transform: rotate(10deg) scale(1.1); }
+    .fade-in { animation: fadeIn 1s ease-in-out; }
+    .slide-up { animation: slideUp 0.8s ease-out; }
+    .stagger { animation: staggerIn 0.6s ease-out forwards; opacity: 0; }
+    .stagger:nth-child(1) { animation-delay: 0.1s; }
+    .stagger:nth-child(2) { animation-delay: 0.2s; }
+    .stagger:nth-child(3) { animation-delay: 0.3s; }
+    .stagger:nth-child(4) { animation-delay: 0.4s; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes staggerIn { to { opacity: 1; transform: translateY(0); } }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); } }
+    input:focus, button:focus { outline: 2px solid #007bff; outline-offset: 2px; }
+  </style>
 </head>
-<body class="bg-gray-900 text-white theme-dark">
-  <div id="auth" class="container mx-auto p-4 max-w-2xl">
-    <h2 class="text-2xl font-bold mb-4">VicXLuauT Auth</h2>
-    <div id="login-form">
-      <input id="login-username" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Username" />
-      <input id="login-password" type="password" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Password" />
-      <button onclick="login()" class="bg-blue-600 p-2 rounded w-full">Login</button>
+<body class="min-h-screen relative">
+
+  <!-- AUTH PAGE -->
+  <div id="auth" class="min-h-screen flex items-center justify-center p-4 relative fade-in">
+    <div class="roblox-card p-8 rounded-2xl roblox-shadow w-full max-w-md slide-up">
+      <div class="text-center mb-6">
+        <img src="https://www.roblox.com/favicon.ico" alt="Roblox Icon" class="roblox-icon mx-auto mb-2">
+        <h2 class="text-3xl roblox-title">VicXLuauT Panel</h2>
+        <p class="text-sm text-gray-400">Craft Luau Scripts Effortlessly</p>
+      </div>
+      <div id="login-form" class="space-y-4 stagger">
+        <input id="login-username" class="w-full p-3 roblox-input" placeholder="Username" />
+        <input id="login-password" type="password" class="w-full p-3 roblox-input" placeholder="Password" />
+        <button onclick="login()" class="w-full roblox-btn py-3 pulse">Login</button>
+      </div>
+      <div id="register-form" class="mt-6 space-y-4 stagger">
+        <input id="reg-username" class="w-full p-3 roblox-input" placeholder="New Username" />
+        <input id="reg-password" type="password" class="w-full p-3 roblox-input" placeholder="New Password" />
+        <button onclick="register()" class="w-full roblox-btn py-3" style="background: linear-gradient(45deg, #28a745, #20c997);">Register</button>
+      </div>
+      <p id="status" class="mt-4 text-center text-red-400 font-medium"></p>
+      <p class="mt-6 text-center text-xs text-gray-500">Powered by VicXLuauT – Inspired by Luarmor</p>
     </div>
-    <div id="register-form" class="mt-4">
-      <input id="reg-username" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="New Username" />
-      <input id="reg-password" type="password" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="New Password" />
-      <button onclick="register()" class="bg-green-600 p-2 rounded w-full">Register (Guest)</button>
-    </div>
-    <p id="status" class="mt-2 text-red-500"></p>
   </div>
 
-  <div id="dashboard" class="container mx-auto p-4 max-w-2xl hidden">
-    <div class="flex justify-between mb-4">
-      <h2 class="text-2xl font-bold">Dashboard</h2>
-      <button onclick="toggleTheme()" class="bg-gray-700 p-2 rounded">Toggle Theme</button>
-    </div>
-    <div id="upload">
-      <h3 class="text-xl mb-2">Upload Script</h3>
-      <input id="name" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Script name" />
-      <input id="key" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Whitelist key" />
-      <input id="expiryDays" type="number" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Expiry days" />
-      <select id="obfuscationLevel" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded">
-        <option value="light">Light</option>
-        <option value="medium">Medium</option>
-        <option value="heavy">Heavy</option>
-      </select>
-      <input id="price" type="number" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Script price (mock)" />
-      <pre id="editor" class="h-64 mb-2 border border-gray-600 rounded" style="position: relative;">-- Thanks for using Sonar, developed by CG, Ethan, Ad</pre>
-      <p id="editor-status" class="text-sm text-gray-400 mb-2">Drag .lua file or paste code here.</p>
-      <button onclick="upload()" class="bg-blue-600 p-2 rounded w-full">Upload</button>
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="container mx-auto p-6 max-w-5xl hidden relative fade-in">
+    <div class="flex justify-between items-center mb-6 slide-up">
+      <h2 class="text-3xl roblox-title flex items-center">
+        <img src="https://www.roblox.com/favicon.ico" alt="Dashboard Icon" class="roblox-icon">
+        Dashboard
+      </h2>
+      <button onclick="toggleTheme()" class="roblox-btn px-4 py-2 pulse">Toggle Theme</button>
     </div>
 
-    <div id="bundle" class="mt-4">
-      <h3 class="text-xl mb-2">Bundle Scripts</h3>
-      <input id="bundle-keys" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Comma-separated keys" />
-      <input id="bundle-name" class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded" placeholder="Bundle name" />
-      <button onclick="bundleScripts()" class="bg-purple-600 p-2 rounded w-full">Bundle</button>
+    <!-- Upload -->
+    <div class="roblox-card p-6 rounded-xl roblox-shadow mb-6 slide-up">
+      <h3 class="text-xl roblox-title mb-4 flex items-center">
+        <img src="https://img.icons8.com/fluency/48/000000/upload.png" alt="Upload Icon" class="roblox-icon">
+        Upload Script
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 stagger">
+        <input id="name" class="p-3 roblox-input" placeholder="Script Name" />
+        <input id="key" class="p-3 roblox-input" placeholder="Whitelist Key" />
+        <input id="expiryDays" type="number" class="p-3 roblox-input" placeholder="Expiry (days)" value="30" />
+        <select id="obfuscationLevel" class="p-3 roblox-input">
+          <option value="light">Light Obfuscation</option>
+          <option value="medium">Medium</option>
+          <option value="heavy">Heavy (Junk Code)</option>
+        </select>
+        <input id="price" type="number" class="p-3 roblox-input" placeholder="Price" />
+      </div>
+      <div id="editor" class="h-64 mb-4 border border-gray-600 rounded-lg" style="background: #2a2a3e;"></div>
+      <p id="editor-status" class="text-sm text-gray-400 mb-4">Drag .lua file or paste code</p>
+      <button onclick="upload()" class="w-full roblox-btn py-3 pulse">Upload Script</button>
     </div>
 
-    <h3 class="text-xl mt-4 mb-2">Uploaded Scripts</h3>
+    <!-- Bundle -->
+    <div class="roblox-card p-6 rounded-xl roblox-shadow mb-6 slide-up">
+      <h3 class="text-xl roblox-title mb-4 flex items-center">
+        <img src="https://img.icons8.com/fluency/48/000000/bundle.png" alt="Bundle Icon" class="roblox-icon">
+        Bundle Scripts
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 stagger">
+        <input id="bundle-keys" class="p-3 roblox-input" placeholder="key1,key2,key3" />
+        <input id="bundle-name" class="p-3 roblox-input" placeholder="Bundle Name" />
+      </div>
+      <button onclick="bundleScripts()" class="mt-4 w-full roblox-btn py-3 pulse" style="background: linear-gradient(45deg, #6f42c1, #e83e8c);">Create Bundle</button>
+    </div>
+
+    <!-- Scripts List -->
+    <h3 class="text-xl roblox-title mb-4 flex items-center slide-up">
+      <img src="https://img.icons8.com/fluency/48/000000/script.png" alt="Scripts Icon" class="roblox-icon">
+      Your Scripts
+    </h3>
     <div id="list" class="space-y-4"></div>
 
-    <h3 class="text-xl mt-4 mb-2">Stats & Logs</h3>
-    <button onclick="loadStats()" class="bg-green-600 p-2 rounded mb-2">Load Stats</button>
-    <button onclick="exportCsv()" class="bg-yellow-600 p-2 rounded mb-2">Export CSV</button>
-    <div id="stats" class="space-y-2"></div>
-    <div id="audit" class="mt-4 text-yellow-400"></div>
+    <!-- Stats -->
+    <div class="mt-8 roblox-card p-6 rounded-xl roblox-shadow slide-up">
+      <div class="flex space-x-4 mb-4 stagger">
+        <button onclick="loadStats()" class="roblox-btn px-4 py-2 pulse">Load Stats</button>
+        <button onclick="exportCsv()" class="roblox-btn px-4 py-2 pulse" style="background: linear-gradient(45deg, #ffc107, #fd7e14);">Export CSV</button>
+      </div>
+      <div id="stats" class="space-y-2 text-gray-300"></div>
+      <div id="audit" class="mt-4 text-yellow-400 font-medium"></div>
+    </div>
 
-    <footer class="mt-8 text-center text-gray-500 text-sm">
+    <footer class="mt-10 text-center text-gray-500 text-sm slide-up">
       Thanks for using Sonar, developed by CG, Ethan, Ad. Integrated in VicXLuauT.
     </footer>
   </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.35.2/ace.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.35.2/ext-language_tools.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.35.2/mode-lua.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.35.2/theme-monokai.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
